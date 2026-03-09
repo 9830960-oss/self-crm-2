@@ -46,7 +46,7 @@ const initialExpenses = [
 function Avatar({ name, size = 40, color = "#6366f1" }: any) {
   const initials = name.split(" ").map((w: any) => w[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div style={{
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif", flexWrap: "wrap" }}>
       width: size, height: size, borderRadius: "50%", background: color,
       display: "flex", alignItems: "center", justifyContent: "center",
       color: "#fff", fontWeight: 700, fontSize: size * 0.35, flexShrink: 0,
@@ -687,7 +687,12 @@ export default function App() {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      <aside style={{ width: 220, background: "#fff", borderRight: "1px solid #f1f5f9", display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", flexShrink: 0 }}>
+      <aside style={{ width: 220, background: "#fff", borderRight: "1px solid #f1f5f9", display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", flexShrink: 0, minWidth: 220 }}>
+```
+
+И найди строку с `<main style=`:
+```
+<main style={{ flex: 1, padding: 16, minWidth: 0, overflowX: "hidden", maxWidth: "100%" }}>
         <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid #f1f5f9" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 36, height: 36, background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>✦</div>
