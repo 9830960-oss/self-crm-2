@@ -1,14 +1,1189 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Порядок — CRM для самозанятых</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0e0e0e;
+    --paper: #f5f2ec;
+    --cream: #ede9e0;
+    --accent: #d4552a;
+    --accent2: #1a5c3a;
+    --gold: #c9a84c;
+    --muted: #7a7469;
+    --card-bg: #ffffff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Onest', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 20px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(245, 242, 236, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(14,14,14,0.08);
+  }
+
+  .nav-logo {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--accent); }
+
+  .nav-cta {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Onest', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 24px;
+    border-radius: 100px;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 2px solid var(--ink);
+  }
+
+  .nav-cta:hover {
+    background: transparent;
+    color: var(--ink);
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 48px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg-circle {
+    position: absolute;
+    width: 700px;
+    height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,85,42,0.12) 0%, transparent 70%);
+    right: -200px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--cream);
+    border: 1px solid rgba(14,14,14,0.12);
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 40px;
+    width: fit-content;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero-tag::before {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(42px, 6vw, 88px);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.04em;
+    max-width: 900px;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+
+  h1 .accent { color: var(--accent); }
+  h1 .underline-text {
+    position: relative;
+    display: inline-block;
+  }
+  h1 .underline-text::after {
+    content: '';
+    position: absolute;
+    bottom: 4px; left: 0; right: 0;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 2px;
+  }
+
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 20px);
+    font-weight: 400;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.65;
+    margin-top: 28px;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-top: 48px;
+    flex-wrap: wrap;
+    animation: fadeUp 0.7s 0.3s ease both;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    font-family: 'Onest', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 16px 36px;
+    border-radius: 100px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(212,85,42,0.35);
+  }
+
+  .btn-primary svg { transition: transform 0.2s; }
+  .btn-primary:hover svg { transform: translateX(4px); }
+
+  .btn-secondary {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s;
+  }
+
+  .btn-secondary:hover { color: var(--ink); }
+
+  .hero-stats {
+    display: flex;
+    gap: 48px;
+    margin-top: 80px;
+    padding-top: 40px;
+    border-top: 1px solid rgba(14,14,14,0.1);
+    animation: fadeUp 0.7s 0.4s ease both;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {}
+  .stat-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+  .stat-num span { color: var(--accent); }
+  .stat-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTION COMMON */
+  section { padding: 100px 48px; }
+
+  .section-label {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    max-width: 700px;
+  }
+
+  .section-title em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  /* PAINS SECTION */
+  .pains-section {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .pains-section .section-label { color: var(--gold); }
+  .pains-section .section-title { color: var(--paper); max-width: 100%; }
+
+  .pains-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2px;
+    margin-top: 60px;
+    border: 2px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .pain-card {
+    padding: 32px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: background 0.3s;
+    cursor: default;
+  }
+
+  .pain-card:hover {
+    background: rgba(212,85,42,0.12);
+  }
+
+  .pain-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .pain-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    color: white;
+  }
+
+  .pain-desc {
+    font-size: 14px;
+    color: rgba(245,242,236,0.5);
+    line-height: 1.6;
+  }
+
+  /* SOLUTION SECTION */
+  .solutions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 60px;
+  }
+
+  .solution-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(14,14,14,0.06);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .solution-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(14,14,14,0.1);
+  }
+
+  .solution-card.featured {
+    background: var(--accent);
+    color: white;
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  .solution-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+
+  .solution-card.featured .solution-icon {
+    background: rgba(255,255,255,0.2);
+  }
+
+  .solution-card h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .solution-card p {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .solution-card.featured p {
+    color: rgba(255,255,255,0.8);
+  }
+
+  .solution-card.featured h3 { color: white; }
+
+  .solution-visual {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mock-row {
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: white;
+  }
+
+  .mock-badge {
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-green { background: rgba(26,92,58,0.8); }
+  .badge-yellow { background: rgba(201,168,76,0.8); }
+  .badge-red { background: rgba(180,40,20,0.7); }
+
+  /* FOR WHO */
+  .forwho {
+    background: var(--cream);
+  }
+
+  .who-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin-top: 48px;
+  }
+
+  .who-chip {
+    background: white;
+    border: 1px solid rgba(14,14,14,0.1);
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .who-chip:hover {
+    background: var(--ink);
+    color: white;
+    border-color: var(--ink);
+    transform: translateY(-2px);
+  }
+
+  .who-chip .who-emoji { font-size: 28px; display: block; margin-bottom: 10px; }
+
+  /* HOW IT WORKS */
+  .steps {
+    counter-reset: step;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 60px;
+    max-width: 800px;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 32px;
+    align-items: start;
+    padding: 32px 0;
+    border-bottom: 1px solid rgba(14,14,14,0.08);
+    counter-increment: step;
+    transition: opacity 0.2s;
+  }
+
+  .step:last-child { border-bottom: none; }
+  .step:hover { opacity: 0.8; }
+
+  .step-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: rgba(14,14,14,0.08);
+    line-height: 1;
+    padding-top: 4px;
+  }
+
+  .step h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+  }
+
+  .step p {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+
+  /* TESTIMONIALS */
+  .testimonials { background: var(--ink); }
+  .testimonials .section-title { color: var(--paper); }
+  .testimonials .section-label { color: var(--gold); }
+
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 60px;
+  }
+
+  .review-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 32px;
+    transition: background 0.3s;
+  }
+
+  .review-card:hover { background: rgba(255,255,255,0.08); }
+
+  .review-stars {
+    color: var(--gold);
+    font-size: 16px;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  .review-text {
+    font-size: 15px;
+    color: rgba(245,242,236,0.8);
+    line-height: 1.65;
+    margin-bottom: 24px;
+  }
+
+  .review-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .review-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .review-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: white;
+  }
+
+  .review-role {
+    font-size: 12px;
+    color: rgba(245,242,236,0.4);
+    margin-top: 2px;
+  }
+
+  /* PRICING */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 60px;
+    align-items: stretch;
+  }
+
+  .price-card {
+    background: white;
+    border: 1px solid rgba(14,14,14,0.08);
+    border-radius: 20px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .price-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(14,14,14,0.1);
+  }
+
+  .price-card.popular {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    position: relative;
+  }
+
+  .popular-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: white;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+
+  .price-name {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .price-card.popular .price-name { color: rgba(245,242,236,0.5); }
+
+  .price-amount {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .price-period {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .price-card.popular .price-period { color: rgba(245,242,236,0.5); }
+
+  .price-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 40px;
+    flex: 1;
+  }
+
+  .price-features li {
+    font-size: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.4;
+  }
+
+  .price-features li::before {
+    content: '✓';
+    color: var(--accent2);
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .price-card.popular .price-features li::before { color: var(--gold); }
+
+  .price-btn {
+    background: var(--ink);
+    color: white;
+    border: 2px solid var(--ink);
+    padding: 14px;
+    border-radius: 12px;
+    font-family: 'Onest', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    transition: all 0.2s;
+  }
+
+  .price-btn:hover { background: transparent; color: var(--ink); }
+
+  .price-card.popular .price-btn {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .price-card.popular .price-btn:hover {
+    background: transparent;
+    color: var(--accent);
+  }
+
+  /* CTA FINAL */
+  .cta-final {
+    background: var(--accent);
+    color: white;
+    text-align: center;
+    padding: 120px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-final::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(0,0,0,0.1) 0%, transparent 60%);
+  }
+
+  .cta-final h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    max-width: 800px;
+    margin: 0 auto 24px;
+    position: relative;
+  }
+
+  .cta-final p {
+    font-size: 18px;
+    color: rgba(255,255,255,0.8);
+    max-width: 480px;
+    margin: 0 auto 48px;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  .cta-final .btn-white {
+    background: white;
+    color: var(--accent);
+    font-family: 'Onest', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 18px 48px;
+    border-radius: 100px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.25s;
+    position: relative;
+  }
+
+  .cta-final .btn-white:hover {
+    transform: scale(1.04);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--ink);
+    color: rgba(245,242,236,0.4);
+    padding: 40px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap;
+    gap: 16px;
+  }
+
+  footer .logo {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--paper);
+    text-decoration: none;
+  }
+
+  footer .logo span { color: var(--accent); }
+
+  footer p { font-size: 13px; }
+
+  /* SCROLL REVEAL */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    section { padding: 72px 24px; }
+    .hero { padding: 100px 24px 60px; }
+    .hero-stats { gap: 28px; }
+    .solutions-grid { grid-template-columns: 1fr; }
+    .solution-card.featured { grid-column: span 1; grid-template-columns: 1fr; }
+    .reviews-grid { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; text-align: center; }
+  }
+
+  @media (max-width: 600px) {
+    .solution-visual { display: none; }
+    .who-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Поря<span>док</span></a>
+  <a href="#pricing" class="nav-cta">Начать бесплатно</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-circle"></div>
+
+  <div class="hero-tag">CRM для самозанятых и фрилансеров</div>
+
+  <h1>
+    Заявки, клиенты<br>
+    и деньги — больше<br>
+    не <span class="accent underline-text">теряются</span>
+  </h1>
+
+  <p class="hero-sub">
+    Один сервис вместо хаоса в чатах, заметках и памяти. Видите всех клиентов, все оплаты, всё расписание — в одном месте.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#pricing" class="btn-primary">
+      Попробовать бесплатно
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a href="#how" class="btn-secondary">
+      Как это работает →
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">3<span>×</span></div>
+      <div class="stat-label">меньше забытых клиентов</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">+<span>40%</span></div>
+      <div class="stat-label">к повторным продажам</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num"><span>0</span></div>
+      <div class="stat-label">потерянных оплат</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">5<span>мин</span></div>
+      <div class="stat-label">на старт без настройки</div>
+    </div>
+  </div>
+</section>
+
+<!-- PAINS -->
+<section class="pains-section reveal">
+  <div class="section-label">Узнаёте себя?</div>
+  <h2 class="section-title">10 причин, почему<br>деньги утекают сквозь пальцы</h2>
+
+  <div class="pains-grid">
+
+    <div class="pain-card">
+      <div class="pain-num">01</div>
+      <div class="pain-title">Клиенты теряются в Telegram, WhatsApp и заметках</div>
+      <div class="pain-desc">Важные заявки пропадают среди переписок.</div>
+    </div>
+
+    <div class="pain-card">
+      <div class="pain-num">02</div>
+      <div class="pain-title">Непонятно, кто записан, кто отменился, кто ждёт</div>
+      <div class="pain-desc">Из-за хаоса легко забыть про клиента.</div>
+    </div>
+
+    <div class="pain-card">
+      <div class="pain-num">03</div>
+      <div class="pain-title">Оплаты приходится держать в голове</div>
+      <div class="pain-desc">Кто внёс предоплату, кто должен, кто уже оплатил — всё смешивается.</div>
+    </div>
+
+    <div class="pain-card">
+      <div class="pain-num">04</div>
+      <div class="pain-title">Нет единого места для всей работы</div>
+      <div class="pain-desc">Клиенты в одном, записи в другом, суммы в третьем.</div>
+    </div>
+
+    <div class="pain-card">
+      <div class="pain-num">05</div>
+      <div class="pain-title">Повторные клиенты уходят, потому что о них забывают</div>
+      <div class="pain-desc">Нет напоминаний и повторных касаний.</div>
+    </div>
+
+    <div class="pain-card">
+      <div class="pain-num">06</div>
+      <div class="pain-title">Доход есть, а сколько реально заработано — непонятно</div>
+      <div class="pain-desc">Деньги приходят, но прибыль не видна.</div>
+    </div>
+
+    <div class="pain-card">
+      <div class="pain-num">07</div>
+      <div class="pain-title">Слишком много ручной рутины</div>
+      <div class="pain-desc">Приходится постоянно переписывать, пересчитывать и проверять вручную.</div>
+    </div>
+
+    <div class="pain-card">
+      <div class="pain-num">08</div>
+      <div class="pain-title">Любая ошибка стоит денег</div>
+      <div class="pain-desc">Пропущенная запись или забытая оплата = потерянный доход.</div>
+    </div>
+
+    <div class="pain-card">
+      <div class="pain-num">09</div>
+      <div class="pain-title">Когда клиентов становится больше — начинается перегруз</div>
+      <div class="pain-desc">Работать «из головы» уже невозможно.</div>
+    </div>
+
+    <div class="pain-card">
+      <div class="pain-num">10</div>
+      <div class="pain-title">Нет ощущения контроля над своей работой</div>
+      <div class="pain-desc">Вместо системы — постоянный стресс и страх что-то упустить.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- SOLUTIONS -->
+<section id="features" class="reveal">
+  <div class="section-label">Что решает Порядок</div>
+  <h2 class="section-title">Всё под контролем — с первого дня</h2>
+
+  <div class="solutions-grid">
+
+    <div class="solution-card featured">
+      <div>
+        <div class="solution-icon">📋</div>
+        <h3>Все клиенты и сделки в одном месте</h3>
+        <p>Заявки из Telegram, WhatsApp, Instagram — всё собирается в единую базу. История общения, статус сделки, следующий шаг — всё видно сразу. Никакой путаницы.</p>
+      </div>
+      <div class="solution-visual">
+        <div class="mock-row">
+          Анна Смирнова — маникюр
+          <span class="mock-badge badge-green">Оплачено</span>
+        </div>
+        <div class="mock-row">
+          Дмитрий — логотип
+          <span class="mock-badge badge-yellow">Предоплата</span>
+        </div>
+        <div class="mock-row">
+          Ольга — фотосессия
+          <span class="mock-badge badge-red">Ждёт ответа</span>
+        </div>
+        <div class="mock-row">
+          Игорь — консультация
+          <span class="mock-badge badge-green">Завершено</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="solution-card">
+      <div class="solution-icon">💸</div>
+      <h3>Учёт оплат без таблиц</h3>
+      <p>Статус «оплачено / предоплата / должен» — на каждого клиента. Напоминания автоматически. Больше никаких «потом переведу».</p>
+    </div>
+
+    <div class="solution-card">
+      <div class="solution-icon">📅</div>
+      <h3>Расписание и напоминания</h3>
+      <p>Кто записан, когда, на что. Напоминания клиенту и себе. Никакого «я уже назначил на это время».</p>
+    </div>
+
+    <div class="solution-card">
+      <div class="solution-icon">📊</div>
+      <h3>Аналитика дохода</h3>
+      <p>Сколько заработали в этом месяце, какие услуги выгоднее, кто из клиентов приносит больше всего. Всё в понятных цифрах.</p>
+    </div>
+
+    <div class="solution-card">
+      <div class="solution-icon">🔁</div>
+      <h3>Повторные продажи</h3>
+      <p>Напоминание вернуться к клиенту через нужный срок. Повторные касания, которые превращают разовых клиентов в постоянных.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOR WHO -->
+<section class="forwho reveal">
+  <div class="section-label">Для кого</div>
+  <h2 class="section-title">Идеально подходит, если у вас <em>переписки, записи и предоплаты</em></h2>
+
+  <div class="who-grid">
+    <div class="who-chip"><span class="who-emoji">💅</span>Бьюти-мастера</div>
+    <div class="who-chip"><span class="who-emoji">📚</span>Репетиторы</div>
+    <div class="who-chip"><span class="who-emoji">🔧</span>Мастера ремонта</div>
+    <div class="who-chip"><span class="who-emoji">📸</span>Фотографы</div>
+    <div class="who-chip"><span class="who-emoji">🎨</span>Дизайнеры</div>
+    <div class="who-chip"><span class="who-emoji">⚖️</span>Юристы</div>
+    <div class="who-chip"><span class="who-emoji">🧠</span>Психологи</div>
+    <div class="who-chip"><span class="who-emoji">🏋️</span>Тренеры</div>
+    <div class="who-chip"><span class="who-emoji">📱</span>SMM-специалисты</div>
+    <div class="who-chip"><span class="who-emoji">✂️</span>На заказ</div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" class="reveal">
+  <div class="section-label">Как начать</div>
+  <h2 class="section-title">Три шага до порядка</h2>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div>
+        <h3>Зарегистрируйтесь за 1 минуту</h3>
+        <p>Никаких длинных анкет. Только почта и имя — и вы уже внутри. Интерфейс понятен с первого взгляда, без обучения.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div>
+        <h3>Добавьте первых клиентов</h3>
+        <p>Перенесите контакты из телефона или начните добавлять новые заявки прямо сейчас. Каждому клиенту — своя карточка, история и статус.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div>
+        <h3>Работайте без хаоса</h3>
+        <p>Фиксируйте заказы, отмечайте оплаты, ставьте напоминания. Уже через неделю вы не поймёте, как работали без этого.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials reveal">
+  <div class="section-label">Отзывы</div>
+  <h2 class="section-title">Что говорят те, кто навёл порядок</h2>
+
+  <div class="reviews-grid">
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">«Раньше вела клиентов в заметках и постоянно что-то забывала. Теперь всё в одном месте — записи, оплаты, история. Первый месяц — ни одного забытого клиента.»</p>
+      <div class="review-author">
+        <div class="review-avatar">А</div>
+        <div>
+          <div class="review-name">Алина Т.</div>
+          <div class="review-role">Мастер маникюра, Москва</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">«Наконец-то вижу, сколько реально зарабатываю. Раньше думал, что всё нормально — а тут оказалось, что 30% клиентов давно не платили. Сразу собрал деньги.»</p>
+      <div class="review-author">
+        <div class="review-avatar">С</div>
+        <div>
+          <div class="review-name">Сергей М.</div>
+          <div class="review-role">Фотограф, Санкт-Петербург</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">«Я веду 40+ учеников. Без CRM это был кошмар — кто оплатил, кто нет, кому перенос. Теперь трачу на учёт 10 минут в день вместо часа.»</p>
+      <div class="review-author">
+        <div class="review-avatar">М</div>
+        <div>
+          <div class="review-name">Марина К.</div>
+          <div class="review-role">Репетитор по математике</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing" class="reveal">
+  <div class="section-label">Тарифы</div>
+  <h2 class="section-title">Начните бесплатно.<br>Растите без ограничений.</h2>
+
+  <div class="pricing-grid">
+
+    <div class="price-card">
+      <div class="price-name">Старт</div>
+      <div class="price-amount">0₽</div>
+      <div class="price-period">навсегда бесплатно</div>
+      <ul class="price-features">
+        <li>До 20 клиентов</li>
+        <li>Карточки и статусы сделок</li>
+        <li>Учёт оплат</li>
+        <li>Базовые напоминания</li>
+      </ul>
+      <a href="#" class="price-btn">Попробовать</a>
+    </div>
+
+    <div class="price-card popular">
+      <div class="popular-badge">Популярный</div>
+      <div class="price-name">Профи</div>
+      <div class="price-amount">790₽</div>
+      <div class="price-period">в месяц</div>
+      <ul class="price-features">
+        <li>Неограниченно клиентов</li>
+        <li>Расписание и календарь</li>
+        <li>Напоминания клиентам</li>
+        <li>Аналитика доходов</li>
+        <li>История общения</li>
+        <li>Повторные касания</li>
+      </ul>
+      <a href="#" class="price-btn">Начать 14 дней бесплатно</a>
+    </div>
+
+    <div class="price-card">
+      <div class="price-name">Бизнес</div>
+      <div class="price-amount">1490₽</div>
+      <div class="price-period">в месяц</div>
+      <ul class="price-features">
+        <li>Всё из «Профи»</li>
+        <li>Командная работа</li>
+        <li>Интеграция с Telegram</li>
+        <li>Расширенная аналитика</li>
+        <li>Приоритетная поддержка</li>
+        <li>Экспорт данных</li>
+      </ul>
+      <a href="#" class="price-btn">Начать 14 дней бесплатно</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <h2>Хватит держать всё в голове</h2>
+  <p>Попробуйте Порядок бесплатно — и уже сегодня перестаньте терять клиентов и деньги.</p>
+  <a href="#" class="btn-white">
+    Начать бесплатно
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="logo">Поря<span>док</span></a>
+  <p>© 2025 Порядок. CRM для самозанятых.</p>
+  <p>Политика конфиденциальности · Условия использования</p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Smooth nav highlight
+  const sections = document.querySelectorAll('section[id]');
+</script>
+</body>
 </html>
