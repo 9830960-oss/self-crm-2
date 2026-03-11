@@ -46,7 +46,7 @@ const initialExpenses = [
 function Avatar({ name, size = 40, color = "#6366f1" }: any) {
   const initials = name.split(" ").map((w: any) => w[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif", flexWrap: "wrap" }}>
+    <div style={{
       width: size, height: size, borderRadius: "50%", background: color,
       display: "flex", alignItems: "center", justifyContent: "center",
       color: "#fff", fontWeight: 700, fontSize: size * 0.35, flexShrink: 0,
@@ -625,41 +625,215 @@ function Calendar({ orders, clients }: any) {
 }
 
 function Settings({ templateKey, setTemplateKey }: any) {
+function Analytics({ orders, clients, expenses }: any) {
+  const today = new Date();
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(today.getFullYear(), today.getMonth() - 5 + i, 1);
+    return {
+      key: d.toISOString().slice(0, 7),
+      label: ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"][d.getMonth()],
+    };
+  });
+
+  const monthData = months.map((m: any) => {
+    const revenue = orders.filter((o: any) => o.date.startsWith(m.key) && o.payStatus === "paid").reduce((s: any, o: any) => s + o.price, 0);
+    const exp = expenses.filter((e: any) => e.date.startsWith(m.key)).reduce((s: any, e: any) => s + e.amount, 0);
+    const newClients = clients.filter((c: any) => c.created.startsWith(m.key)).length;
+    return { ...m, revenue, expenses: exp, profit: revenue - exp, newClients };
+  });
+
+  const maxRevenue = Math.max(...monthData.map((m: any) => m.revenue), 1);
+  const totalRevenue = monthData.reduce((s: any, m: any) => s + m.revenue, 0);
+  const totalProfit = monthData.reduce((s: any, m: any) => s + m.profit, 0);
+  const totalNewClients = monthData.reduce((s: any, m: any) => s + m.newClients, 0);
+
+  // Топ услуг
+  const serviceMap: any = {};
+  orders.forEach((o: any) => {
+    if (!serviceMap[o.service]) serviceMap[o.service] = { count: 0, revenue: 0 };
+    serviceMap[o.service].count++;
+    if (o.payStatus === "paid") serviceMap[o.service].revenue += o.price;
+  });
+  const topServices = Object.entries(serviceMap)
+    .map(([name, data]: any) => ({ name, ...data }))
+    .sort((a: any, b: any) => b.revenue - a.revenue)
+    .slice(0, 5);
+  const maxServiceRevenue = Math.max(...topServices.map((s: any) => s.revenue), 1);
+
+  // Статистика клиентов
+  const clientStats = {
+    total: clients.length,
+    active: clients.filter((c: any) => c.status === "active").length,
+    new: clients.filter((c: any) => c.status === "new").length,
+  };
+
+  // Средний чек
+  const paidOrders = orders.filter((o: any) => o.payStatus === "paid");
+  const avgCheck = paidOrders.length > 0 ? Math.round(paidOrders.reduce((s: any, o: any) => s + o.price, 0) / paidOrders.length) : 0;
+
+  const colors = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe"];
+
   return (
     <div>
-      <h2 style={{ margin: "0 0 24px", fontSize: 24, fontWeight: 700, color: "#0f172a", fontFamily: "'Unbounded', sans-serif" }}>Настройки</h2>
-      <Card style={{ marginBottom: 20 }}>
-        <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>Шаблон для вашей сферы</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
-          {Object.entries(TEMPLATES).map(([key, tpl]: any) => (
-            <div key={key} onClick={() => setTemplateKey(key)} style={{ padding: "16px", borderRadius: 12, cursor: "pointer", textAlign: "center", border: `2px solid ${templateKey === key ? tpl.color : "#e2e8f0"}`, background: templateKey === key ? tpl.color + "18" : "#f8fafc" }}>
-              <p style={{ margin: "0 0 6px", fontSize: 22 }}>{{ beauty: "💅", tutor: "📚", photo: "📸", repair: "🔧", legal: "⚖️", other: "💼" }[key as string]}</p>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 13 }}>{tpl.name}</p>
+      <div style={{ marginBottom: 28 }}>
+        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#0f172a", fontFamily: "'Unbounded', sans-serif" }}>Аналитика</h2>
+        <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: 14 }}>За последние 6 месяцев</p>
+      </div>
+
+      {/* Ключевые метрики */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, marginBottom: 28 }}>
+        {[
+          { label: "Выручка", value: `${totalRevenue.toLocaleString("ru")} ₽`, icon: "💰", color: "#059669", bg: "#ecfdf5" },
+          { label: "Прибыль", value: `${totalProfit.toLocaleString("ru")} ₽`, icon: "📈", color: "#6366f1", bg: "#eef2ff" },
+          { label: "Средний чек", value: `${avgCheck.toLocaleString("ru")} ₽`, icon: "🧾", color: "#d97706", bg: "#fffbeb" },
+          { label: "Новых клиентов", value: totalNewClients, icon: "👥", color: "#0891b2", bg: "#ecfeff" },
+        ].map((s: any, i: number) => (
+          <div key={i} style={{ background: s.bg, border: `1px solid ${s.color}22`, borderRadius: 16, padding: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <p style={{ margin: 0, fontSize: 11, color: s.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.label}</p>
+                <p style={{ margin: "8px 0 0", fontSize: 22, fontWeight: 800, color: "#0f172a", fontFamily: "'Unbounded', sans-serif", lineHeight: 1 }}>{s.value}</p>
+              </div>
+              <span style={{ fontSize: 24 }}>{s.icon}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* График выручки */}
+      <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
+        <h3 style={{ margin: "0 0 24px", fontSize: 15, fontWeight: 700, color: "#0f172a" }}>📊 Выручка и расходы по месяцам</h3>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: 180 }}>
+          {monthData.map((m: any, i: number) => (
+            <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, height: "100%" }}>
+              <div style={{ flex: 1, width: "100%", display: "flex", alignItems: "flex-end", gap: 3 }}>
+                {/* Выручка */}
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                  <div style={{ fontSize: 10, color: "#6366f1", fontWeight: 700, textAlign: "center", marginBottom: 3 }}>
+                    {m.revenue > 0 ? `${(m.revenue/1000).toFixed(0)}к` : ""}
+                  </div>
+                  <div style={{
+                    background: "linear-gradient(180deg, #6366f1, #8b5cf6)",
+                    borderRadius: "6px 6px 0 0",
+                    height: `${Math.max((m.revenue / maxRevenue) * 140, m.revenue > 0 ? 4 : 0)}px`,
+                    transition: "height 0.5s ease",
+                    minHeight: m.revenue > 0 ? 4 : 0,
+                  }} />
+                </div>
+                {/* Расходы */}
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                  <div style={{
+                    background: "#fecaca",
+                    borderRadius: "6px 6px 0 0",
+                    height: `${Math.max((m.expenses / maxRevenue) * 140, m.expenses > 0 ? 4 : 0)}px`,
+                    transition: "height 0.5s ease",
+                    minHeight: m.expenses > 0 ? 4 : 0,
+                  }} />
+                </div>
+              </div>
+              <p style={{ margin: 0, fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{m.label}</p>
             </div>
           ))}
         </div>
-      </Card>
-      <Card>
-        <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>PRO-функции</h3>
-        {[
-          { icon: "🤖", name: "Интеграция с Telegram-ботом", desc: "Клиенты записываются сами" },
-          { icon: "📄", name: "Договоры и акты", desc: "Генерация одним кликом" },
-          { icon: "🔔", name: "Автонапоминания", desc: "SMS и push за 24 часа до визита" },
-          { icon: "📊", name: "Расширенная аналитика", desc: "Воронка, LTV, средний чек" },
-        ].map((f: any, i: number) => (
-          <div key={i} style={{ display: "flex", gap: 14, alignItems: "center", padding: "12px 0", borderBottom: "1px solid #f1f5f9" }}>
-            <span style={{ fontSize: 24 }}>{f.icon}</span>
-            <div style={{ flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{f.name}</p>
-              <p style={{ margin: "2px 0 0", fontSize: 12, color: "#64748b" }}>{f.desc}</p>
-            </div>
-            <span style={{ background: "#fef3c7", color: "#d97706", padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700 }}>PRO</span>
+        <div style={{ display: "flex", gap: 20, marginTop: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 12, height: 12, background: "#6366f1", borderRadius: 3 }} />
+            <span style={{ fontSize: 12, color: "#64748b" }}>Выручка</span>
           </div>
-        ))}
-        <button style={{ marginTop: 16, width: "100%", padding: "14px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", border: "none", borderRadius: 12, color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
-          Подключить PRO — 590 ₽/мес →
-        </button>
-      </Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ width: 12, height: 12, background: "#fecaca", borderRadius: 3 }} />
+            <span style={{ fontSize: 12, color: "#64748b" }}>Расходы</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+        {/* Топ услуг */}
+        <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+          <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 700, color: "#0f172a" }}>🏆 Топ услуг</h3>
+          {topServices.length === 0 ? (
+            <p style={{ color: "#94a3b8", fontSize: 14, textAlign: "center", padding: "20px 0" }}>Нет данных</p>
+          ) : topServices.map((s: any, i: number) => (
+            <div key={i} style={{ marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 20, height: 20, background: colors[i], borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#fff", fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
+                  <span style={{ fontSize: 13, color: "#0f172a", fontWeight: 600 }}>{s.name}</span>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#059669" }}>{s.revenue.toLocaleString("ru")} ₽</span>
+              </div>
+              <div style={{ background: "#f1f5f9", borderRadius: 4, height: 6, overflow: "hidden" }}>
+                <div style={{ height: "100%", background: colors[i], borderRadius: 4, width: `${(s.revenue / maxServiceRevenue) * 100}%`, transition: "width 0.5s" }} />
+              </div>
+              <p style={{ margin: "4px 0 0", fontSize: 11, color: "#94a3b8" }}>{s.count} заказов</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Клиенты */}
+        <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+          <h3 style={{ margin: "0 0 20px", fontSize: 15, fontWeight: 700, color: "#0f172a" }}>👥 База клиентов</h3>
+
+          {/* Доnut chart простой */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+            <div style={{ position: "relative", width: 120, height: 120 }}>
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#f1f5f9" strokeWidth="18" />
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#6366f1" strokeWidth="18"
+                  strokeDasharray={`${(clientStats.active / Math.max(clientStats.total, 1)) * 283} 283`}
+                  strokeDashoffset="70.75"
+                  style={{ transition: "stroke-dasharray 0.5s" }} />
+                <circle cx="60" cy="60" r="45" fill="none" stroke="#34d399" strokeWidth="18"
+                  strokeDasharray={`${(clientStats.new / Math.max(clientStats.total, 1)) * 283} 283`}
+                  strokeDashoffset={`${70.75 - (clientStats.active / Math.max(clientStats.total, 1)) * 283}`}
+                  style={{ transition: "stroke-dasharray 0.5s" }} />
+              </svg>
+              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0f172a", fontFamily: "'Unbounded', sans-serif", lineHeight: 1 }}>{clientStats.total}</p>
+                <p style={{ margin: "2px 0 0", fontSize: 10, color: "#94a3b8" }}>всего</p>
+              </div>
+            </div>
+          </div>
+
+          {[
+            { label: "Активных", value: clientStats.active, color: "#6366f1", bg: "#eef2ff" },
+            { label: "Новых", value: clientStats.new, color: "#059669", bg: "#ecfdf5" },
+            { label: "Всего", value: clientStats.total, color: "#64748b", bg: "#f8fafc" },
+          ].map((s: any, i: number) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: s.bg, borderRadius: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: "#475569", fontWeight: 500 }}>{s.label}</span>
+              <span style={{ fontSize: 16, fontWeight: 800, color: s.color, fontFamily: "'Unbounded', sans-serif" }}>{s.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Прибыль по месяцам */}
+      <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+        <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 700, color: "#0f172a" }}>💹 Прибыль по месяцам</h3>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: "2px solid #f1f5f9" }}>
+                {["Месяц", "Выручка", "Расходы", "Прибыль", "Клиентов"].map((h: any) => (
+                  <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {monthData.map((m: any, i: number) => (
+                <tr key={i} style={{ borderBottom: "1px solid #f8fafc" }}>
+                  <td style={{ padding: "12px", fontWeight: 600, color: "#0f172a" }}>{m.label}</td>
+                  <td style={{ padding: "12px", color: "#059669", fontWeight: 600 }}>{m.revenue.toLocaleString("ru")} ₽</td>
+                  <td style={{ padding: "12px", color: "#dc2626" }}>{m.expenses.toLocaleString("ru")} ₽</td>
+                  <td style={{ padding: "12px", fontWeight: 700, color: m.profit >= 0 ? "#6366f1" : "#dc2626" }}>{m.profit.toLocaleString("ru")} ₽</td>
+                  <td style={{ padding: "12px", color: "#64748b" }}>{m.newClients}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
@@ -681,18 +855,14 @@ export default function App() {
     { key: "orders", icon: "📋", label: "Заказы" },
     { key: "calendar", icon: "📅", label: "Календарь" },
     { key: "finance", icon: "💰", label: "Финансы" },
+    { key: "analytics", icon: "📊", label: "Аналитика" },
     { key: "settings", icon: "⚙️", label: "Настройки" },
   ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif", flexWrap: "wrap" }}>
       <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <aside style={{ width: 220, background: "#fff", borderRight: "1px solid #f1f5f9", display: "flex", flexDirection: "column", position: "sticky", top: 0, height: "100vh", flexShrink: 0, minWidth: 220 }}>
-```
-
-И найди строку с `<main style=`:
-```
-<main style={{ flex: 1, padding: 16, minWidth: 0, overflowX: "hidden", maxWidth: "100%" }}>
         <div style={{ padding: "24px 20px 20px", borderBottom: "1px solid #f1f5f9" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 36, height: 36, background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>✦</div>
@@ -719,12 +889,13 @@ export default function App() {
           </div>
         </div>
       </aside>
-      <main style={{ flex: 1, padding: 32, minWidth: 0, overflowX: "hidden" }}>
+      <main style={{ flex: 1, padding: 24, minWidth: 0, overflowX: "hidden", maxWidth: "100%" }}>
         {page === "dashboard" && <Dashboard clients={clients} orders={orders} expenses={expenses} template={template} onNavigate={setPage} />}
         {page === "clients" && <Clients clients={clients} setClients={setClients} orders={orders} template={template} />}
         {page === "orders" && <Orders orders={orders} setOrders={setOrders} clients={clients} template={template} />}
         {page === "calendar" && <Calendar orders={orders} clients={clients} />}
         {page === "finance" && <Finance orders={orders} expenses={expenses} setExpenses={setExpenses} />}
+        {page === "analytics" && <Analytics orders={orders} clients={clients} expenses={expenses} />}
         {page === "settings" && <Settings templateKey={templateKey} setTemplateKey={setTemplateKey} />}
       </main>
     </div>
